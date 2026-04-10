@@ -1,0 +1,19 @@
+# API key
+.env
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+docs
+.claude/
+.idea/
+.java-version
+AGENTS.md
+CLAUDE.md
+.codex/
+openspec/
+release/

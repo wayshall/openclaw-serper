@@ -1,93 +1,203 @@
-# aira-claw-serper
+# Serper
 
+Google search via Serper API with full page content extraction. Fast API lookup, then concurrent page scraping (3s timeout per page) via trafilatura. Not just snippets — full article text from every result.
 
+[![GitHub](https://img.shields.io/badge/GitHub-openclaw--serper-blue)](https://github.com/nesdeq/openclaw-serper)
+[![Version](https://img.shields.io/badge/version-3.0.1-green)](https://github.com/nesdeq/openclaw-serper)
+[![License](https://img.shields.io/badge/license-MIT-blue)](https://github.com/nesdeq/openclaw-serper/blob/main/LICENSE)
 
-## Getting started
+---
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## How It Works
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+1. **Serper API call** — fast Google search, returns result URLs instantly
+2. **Concurrent page scraping** — all result pages fetched and extracted in parallel via trafilatura (3s timeout per page)
+3. **Streamed output** — results print one at a time as each page finishes
 
-## Add your files
+One query returns 5 results (default mode) or up to 6 (current mode), each with full page content.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+---
 
+## Install
+
+### 1. Clone
+
+```bash
+git clone https://github.com/nesdeq/openclaw-serper.git ~/.openclaw/skills/serper
 ```
-cd existing_repo
-git remote add origin https://code.lingyiwanwu.net/arm-cloud/aira-claw/aira-claw-serper.git
-git branch -M main
-git push -uf origin main
+
+### 2. Install trafilatura
+
+trafilatura is the only dependency. It must be installed for the same Python that will run the script — install as your user, not with sudo.
+
+```bash
+# Install for your user
+pip install --user trafilatura
+
+# Or if you use pip3 explicitly
+pip3 install --user trafilatura
 ```
 
-## Integrate with your tools
+If `python3` on your system points to a Homebrew/pyenv/asdf-managed Python, `pip install trafilatura` (without `--user`) is fine — those are already user-scoped. The `--user` flag matters on system Python (e.g. Debian/Ubuntu) where global installs require root.
 
-- [ ] [Set up project integrations](https://code.lingyiwanwu.net/arm-cloud/aira-claw/aira-claw-serper/-/settings/integrations)
+**Verify it's importable by the Python that will run the script:**
 
-## Collaborate with your team
+```bash
+python3 -c "import trafilatura; print('ok')"
+```
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+### 3. API key
 
-## Test and Deploy
+Get a free key at [serper.dev](https://serper.dev) (2,500 queries free). Add `SERPER_API_KEY` (or `SERP_API_KEY`) to `~/.openclaw/.env` or `~/.openclaw/skills/serper/.env`:
 
-Use the built-in continuous integration in GitLab.
+```bash
+echo 'SERPER_API_KEY="your-key"' >> ~/.openclaw/.env
+```
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+### 4. Search
 
-***
+```bash
+python3 ~/.openclaw/skills/serper/scripts/search.py -q "how does HTTPS work"
+```
 
-# Editing this README
+---
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+## Search Modes
 
-## Suggestions for a good README
+### `default` — General search (all-time)
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+All-time Google web search, **5 results**, each enriched with full page content.
 
-## Name
-Choose a self-explaining name for your project.
+Use for: general questions, research, how-to, evergreen topics, product info, technical docs, comparisons, tutorials.
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+```bash
+python3 scripts/search.py -q "how does HTTPS work"
+python3 scripts/search.py -q "best mechanical keyboards 2026"
+```
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+### `current` — News and recent info
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+Past-week Google web search (3 results) + Google News (3 results), each enriched with full page content. Results are deduplicated by URL.
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+Use for: news, current events, recent developments, breaking news, announcements.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+```bash
+python3 scripts/search.py -q "OpenAI latest announcements" --mode current
+python3 scripts/search.py -q "tech layoffs this week" --mode current
+```
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+### Mode Selection Guide
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+| Query signals | Mode |
+|---------------|------|
+| "how does X work", "what is X", "explain X" | `default` |
+| Product research, comparisons, tutorials | `default` |
+| Technical documentation, guides | `default` |
+| Historical topics, evergreen content | `default` |
+| "news", "latest", "today", "this week", "recent" | `current` |
+| "what happened", "breaking", "announced", "released" | `current` |
+| Current events, politics, sports scores, stock prices | `current` |
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+---
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+## Locale
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+**Default is global** — no country filter, English results.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+Set `--gl` (country) and `--hl` (language) when the query is non-English or targets a specific region.
+
+| Scenario | Flags |
+|----------|-------|
+| English query, no country target | *(omit --gl and --hl)* |
+| German query or targeting DE/AT/CH | `--gl de --hl de` |
+| French query or targeting France | `--gl fr --hl fr` |
+| Any other language/country | `--gl XX --hl XX` (ISO codes) |
+
+```bash
+# German news
+python3 scripts/search.py -q "Nachrichten aus Berlin" --mode current --gl de --hl de
+
+# French product research
+python3 scripts/search.py -q "meilleur smartphone 2026" --gl fr --hl fr
+```
+
+---
+
+## Output Format
+
+Streamed JSON array — elements print one at a time as each page is scraped:
+
+```json
+[{"query": "how does HTTPS work", "mode": "default", "locale": {"gl": "world", "hl": "en"}, "results": [{"title": "...", "url": "...", "source": "web"}]}
+,{"title": "Page Title", "url": "https://example.com", "source": "web", "content": "Full extracted page text..."}
+,{"title": "News Article", "url": "https://news.com", "source": "news", "date": "2 hours ago", "content": "Full article text..."}
+]
+```
+
+The first element is search metadata. Each following element contains a result with full extracted content.
+
+### Result Fields
+
+| Field | Description |
+|-------|-------------|
+| `title` | Page title |
+| `url` | Source URL |
+| `source` | `"web"`, `"news"`, or `"knowledge_graph"` |
+| `content` | Full extracted page text (falls back to snippet if extraction fails) |
+| `date` | Present when available (news results always, web results sometimes) |
+
+---
+
+## CLI Reference
+
+| Flag | Description |
+|------|-------------|
+| `-q, --query` | Search query (required) |
+| `-m, --mode` | `default` (all-time, 5 results) or `current` (past week + news, 3 each) |
+| `--gl` | Country code (e.g. `de`, `us`, `fr`, `at`, `ch`). Default: `world` |
+| `--hl` | Language code (e.g. `en`, `de`, `fr`). Default: `en` |
+
+---
+
+## FAQ & Troubleshooting
+
+**Q: Do I need a paid Serper account?**
+> No. Serper offers 2,500 free queries at [serper.dev](https://serper.dev).
+
+**Q: Why is content empty or just a snippet for some results?**
+> Some sites block scraping. When trafilatura can't extract content, the skill falls back to the search snippet.
+
+**Q: Does this work on Windows?**
+> Yes. The script uses thread-based timeouts and works on all platforms.
+
+**Error: "trafilatura is required but not installed"**
+```bash
+pip install --user trafilatura
+# Then verify: python3 -c "import trafilatura; print('ok')"
+```
+
+**Error: "Missing Serper API key"**
+```bash
+# Add to ~/.openclaw/.env or ~/.openclaw/skills/serper/.env
+echo 'SERPER_API_KEY="your-key"' >> ~/.openclaw/.env
+```
+
+**Error: "Invalid or expired API key" (401)**
+> Generate a new key at [serper.dev](https://serper.dev).
+
+**Error: "Rate limit exceeded" (429)**
+> Wait and retry, or upgrade your Serper plan.
+
+---
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+MIT
+
+---
+
+## Links
+
+- [Serper](https://serper.dev) — Google Search API (2,500 free queries)
+- [ClawHub](https://www.clawhub.ai/nesdeq/serper) — Skill page
+- [GitHub](https://github.com/nesdeq/openclaw-serper) — Source code & issues
