@@ -58,8 +58,18 @@ _load_env_file()
 FETCH_TIMEOUT = 3
 USER_AGENT = "Mozilla/5.0 (compatible; Serper/3.0)"
 
-SERP_SEARCH_URL = os.environ.get("SERP_SEARCH_URL", "https://google.serper.dev/search")
-SERP_NEWS_URL = os.environ.get("SERP_NEWS_URL", "https://google.serper.dev/news")
+
+def _get_required_env(name: str) -> str:
+    """Get required environment variable, raise error if missing."""
+    value = os.environ.get(name)
+    if not value:
+        raise ValueError(f"Missing required environment variable: {name}. "
+                         f"Set it via environment or add {name}=\"your-value\" to .env file.")
+    return value
+
+
+SERP_SEARCH_URL = _get_required_env("SERP_SEARCH_URL")
+SERP_NEWS_URL = _get_required_env("SERP_NEWS_URL")
 
 # Trafilatura config — shared across all threads
 _traf_config = trafilatura.settings.use_config()

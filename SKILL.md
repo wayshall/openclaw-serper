@@ -141,8 +141,7 @@ The script streams a JSON array. The first element is metadata, the rest are res
 The Serper API key can be configured in **three places** (checked in this order):
 
 1. **`~/.openclaw/openclaw.json`** → `skills.entries.openclaw-serper.env.SERPER_API_KEY` (**preferred**)
-2. **`.env` file** in skill directory → `SERPER_API_KEY="your-key"`
-3. **System environment variable** → `SERPER_API_KEY` or `SERP_API_KEY`
+2. **System environment variable** → `SERPER_API_KEY` or `SERP_API_KEY`
 
 **Before reporting "missing API key":**
 - First check `~/.openclaw/openclaw.json` for `skills.entries.openclaw-serper.env`
